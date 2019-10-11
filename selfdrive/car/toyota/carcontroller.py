@@ -89,7 +89,7 @@ def ipas_state_transition(steer_angle_enabled, enabled, ipas_active, ipas_reset_
     return False, 0
 
 
-class CarController(object):
+class CarController():
   def __init__(self, dbc_name, car_fingerprint, enable_camera, enable_dsu, enable_apg):
     self.braking = False
     # redundant safety check with the board
@@ -206,6 +206,11 @@ class CarController(object):
     elif ECU.APGS in self.fake_ecus:
       can_sends.append(create_ipas_steer_command(self.packer, 0, 0, True))
 
+    if CS.cstm_btns_tr > 0:
+      distance = 1 
+    else:
+      distance = 0 
+
     # accel cmd comes from DSU, but we can spam can to cancel the system even if we are using lat only control
     if (frame % 3 == 0 and ECU.DSU in self.fake_ecus) or (pcm_cancel_cmd and ECU.CAM in self.fake_ecus):
       lead = lead or CS.v_ego < 12.    # at low speed we always assume the lead is present do ACC can be engaged
@@ -214,9 +219,9 @@ class CarController(object):
       if pcm_cancel_cmd and CS.CP.carFingerprint == CAR.LEXUS_IS:
         can_sends.append(create_acc_cancel_command(self.packer))
       elif ECU.DSU in self.fake_ecus:
-        can_sends.append(create_accel_command(self.packer, apply_accel, pcm_cancel_cmd, self.standstill_req, lead))
+        can_sends.append(create_accel_command(self.packer, apply_accel, pcm_cancel_cmd, self.standstill_req, lead, distance))
       else:
-        can_sends.append(create_accel_command(self.packer, 0, pcm_cancel_cmd, False, lead))
+        can_sends.append(create_accel_command(self.packer, 0, pcm_cancel_cmd, False, lead, distance))
 
     if (frame % 2 == 0) and (CS.CP.enableGasInterceptor):
         # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
@@ -257,14 +262,14 @@ class CarController(object):
         # special cases
         if fr_step == 5 and ecu == ECU.CAM and bus == 1:
           cnt = (((frame // 5) % 7) + 1) << 5
-          vl = chr(cnt) + vl
+          vl = bytes([cnt]) + vl
         elif addr in (0x489, 0x48a) and bus == 0:
           # add counter for those 2 messages (last 4 bits)
           cnt = ((frame // 100) % 0xf) + 1
           if addr == 0x48a:
             # 0x48a has a 8 preceding the counter
             cnt += 1 << 7
-          vl += chr(cnt)
+          vl += bytes([cnt])
 
         can_sends.append(make_can_msg(addr, vl, bus, False))
 

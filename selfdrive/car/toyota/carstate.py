@@ -1,5 +1,5 @@
-import numpy as np
 from cereal import car
+from common.numpy_fast import mean
 from common.kalman.simple_kalman import KF1D
 from selfdrive.can.can_define import CANDefine
 from selfdrive.can.parser import CANParser
@@ -15,7 +15,7 @@ def parse_gear_shifter(gear, vals):
   try:
     return val_to_capnp[vals[gear]]
   except KeyError:
-    return "unknown"
+    return GearShifter.unknown
 
 
 def get_can_parser(CP):
@@ -47,6 +47,11 @@ def get_can_parser(CP):
     ("IPAS_STATE", "EPS_STATUS", 1),
     ("BRAKE_LIGHTS_ACC", "ESP_CONTROL", 0),
     ("AUTO_HIGH_BEAM", "LIGHT_STALK", 0),
+    ("ACC_DISTANCE", "JOEL_ID", 2),
+    ("LANE_WARNING", "JOEL_ID", 1),
+    ("ACC_SLOW", "JOEL_ID", 0),
+    ("DISTANCE_LINES", "PCM_CRUISE_SM", 0),
+
   ]
 
   checks = [
@@ -94,7 +99,7 @@ def get_cam_can_parser(CP):
   return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)
 
 
-class CarState(object):
+class CarState():
   def __init__(self, CP):
 
     self.CP = CP
@@ -104,6 +109,12 @@ class CarState(object):
     self.right_blinker_on = 0
     self.angle_offset = 0.
     self.init_angle_offset = False
+
+    self.distance_toggle_prev = 2
+    self.read_distance_lines_prev = 3
+    self.lane_departure_toggle_on_prev = True
+    self.lane_departure_toggle_on = False
+    self.cstm_btns_tr = 0
 
     # initialize can parser
     self.car_fingerprint = CP.carFingerprint
@@ -140,7 +151,7 @@ class CarState(object):
     self.v_wheel_fr = cp.vl["WHEEL_SPEEDS"]['WHEEL_SPEED_FR'] * CV.KPH_TO_MS
     self.v_wheel_rl = cp.vl["WHEEL_SPEEDS"]['WHEEL_SPEED_RL'] * CV.KPH_TO_MS
     self.v_wheel_rr = cp.vl["WHEEL_SPEEDS"]['WHEEL_SPEED_RR'] * CV.KPH_TO_MS
-    v_wheel = float(np.mean([self.v_wheel_fl, self.v_wheel_fr, self.v_wheel_rl, self.v_wheel_rr]))
+    v_wheel = mean([self.v_wheel_fl, self.v_wheel_fr, self.v_wheel_rl, self.v_wheel_rr])
 
     # Kalman filter
     if abs(v_wheel - self.v_ego) > 2.0:  # Prevent large accelerations when car starts at non zero speed
@@ -181,8 +192,24 @@ class CarState(object):
     self.brake_error = 0
     self.steer_torque_driver = cp.vl["STEER_TORQUE_SENSOR"]['STEER_TORQUE_DRIVER']
     self.steer_torque_motor = cp.vl["STEER_TORQUE_SENSOR"]['STEER_TORQUE_EPS']
+    if bool(cp.vl["JOEL_ID"]['LANE_WARNING']) != self.lane_departure_toggle_on_prev:
+      self.lane_departure_toggle_on = bool(cp.vl["JOEL_ID"]['LANE_WARNING'])
+      if self.lane_departure_toggle_on:
+        self.lane_departure_toggle_on_prev = self.lane_departure_toggle_on_prev
+      else:
+        self.lane_departure_toggle_on_prev = self.lane_departure_toggle_on
+
     # we could use the override bit from dbc, but it's triggered at too high torque values
     self.steer_override = abs(self.steer_torque_driver) > STEER_THRESHOLD
+
+    self.distance_toggle = cp.vl["JOEL_ID"]['ACC_DISTANCE']
+    self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
+    if self.distance_toggle != self.distance_toggle_prev:
+      self.cstm_btns_tr = 1
+      self.distance_toggle_prev = self.distance_toggle
+    if self.read_distance_lines != self.read_distance_lines_prev:
+      self.cstm_btns_tr = 0
+      self.read_distance_lines_prev = self.read_distance_lines
 
     self.user_brake = 0
     if self.CP.carFingerprint == CAR.LEXUS_IS:

@@ -1,6 +1,6 @@
 import os
-import numpy as np
 from common.numpy_fast import interp
+import math
 
 import selfdrive.messaging as messaging
 from selfdrive.swaglog import cloudlog
@@ -8,7 +8,6 @@ from common.realtime import sec_since_boot
 from selfdrive.controls.lib.radar_helpers import _LEAD_ACCEL_TAU
 from selfdrive.controls.lib.longitudinal_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LONG
-import math
 from selfdrive.kegman_conf import kegman_conf
 
 
@@ -54,7 +53,7 @@ LOG_MPC = os.environ.get('LOG_MPC', False)
 LOG_MPC = os.environ.get('LOG_MPC', False)
 
 
-class LongitudinalMpc(object):
+class LongitudinalMpc():
   def __init__(self, mpc_id):
     self.mpc_id = mpc_id
 
@@ -81,6 +80,9 @@ class LongitudinalMpc(object):
     self.oneBarProfile = [ONE_BAR_DISTANCE, float(kegman.conf['1barMax'])]
     self.twoBarProfile = [TWO_BAR_DISTANCE, float(kegman.conf['2barMax'])]
     self.threeBarProfile = [THREE_BAR_DISTANCE, float(kegman.conf['3barMax'])]
+    self.oneBarHwy = [ONE_BAR_DISTANCE, ONE_BAR_DISTANCE+float(kegman.conf['1barHwy'])]
+    self.twoBarHwy = [TWO_BAR_DISTANCE, TWO_BAR_DISTANCE+float(kegman.conf['2barHwy'])]
+    self.threeBarHwy = [THREE_BAR_DISTANCE, THREE_BAR_DISTANCE+float(kegman.conf['3barHwy'])]
 
   def send_mpc_solution(self, pm, qp_iterations, calculation_time):
     qp_iterations = max(0, qp_iterations)
@@ -168,6 +170,9 @@ class LongitudinalMpc(object):
       self.oneBarProfile = [ONE_BAR_DISTANCE, float(kegman.conf['1barMax'])]
       self.twoBarProfile = [TWO_BAR_DISTANCE, float(kegman.conf['2barMax'])]
       self.threeBarProfile = [THREE_BAR_DISTANCE, float(kegman.conf['3barMax'])]
+      self.oneBarHwy = [ONE_BAR_DISTANCE, ONE_BAR_DISTANCE+float(kegman.conf['1barHwy'])]
+      self.twoBarHwy = [TWO_BAR_DISTANCE, TWO_BAR_DISTANCE+float(kegman.conf['2barHwy'])]
+      self.threeBarHwy = [THREE_BAR_DISTANCE, THREE_BAR_DISTANCE+float(kegman.conf['3barHwy'])]
       self.bp_counter = 0  
       
       
@@ -178,7 +183,7 @@ class LongitudinalMpc(object):
       if self.street_speed:
         TR = interp(-self.v_rel, self.oneBarBP, self.oneBarProfile)  
       else:
-        TR = interp(-self.v_rel, H_ONE_BAR_PROFILE_BP, H_ONE_BAR_PROFILE) 
+        TR = interp(-self.v_rel, H_ONE_BAR_PROFILE_BP, self.oneBarHwy) 
       if CS.readdistancelines != self.lastTR:
         self.libmpc.init(MPC_COST_LONG.TTC, 1.0, MPC_COST_LONG.ACCELERATION, MPC_COST_LONG.JERK)
         self.lastTR = CS.readdistancelines  
@@ -188,7 +193,7 @@ class LongitudinalMpc(object):
       if self.street_speed:
         TR = interp(-self.v_rel, self.twoBarBP, self.twoBarProfile)
       else:
-        TR = interp(-self.v_rel, H_TWO_BAR_PROFILE_BP, H_TWO_BAR_PROFILE)
+        TR = interp(-self.v_rel, H_TWO_BAR_PROFILE_BP, self.twoBarHwy)
       if CS.readdistancelines != self.lastTR:
         self.libmpc.init(MPC_COST_LONG.TTC, MPC_COST_LONG.DISTANCE, MPC_COST_LONG.ACCELERATION, MPC_COST_LONG.JERK)
         self.lastTR = CS.readdistancelines  
@@ -198,7 +203,7 @@ class LongitudinalMpc(object):
       #if self.street_speed and (self.lead_car_gap_shrinking or self.tailgating):
         TR = interp(-self.v_rel, self.threeBarBP, self.threeBarProfile)
       else:
-        TR = interp(-self.v_rel, H_THREE_BAR_PROFILE_BP, H_THREE_BAR_PROFILE)
+        TR = interp(-self.v_rel, H_THREE_BAR_PROFILE_BP, self.threeBarHwy)
       if CS.readdistancelines != self.lastTR:
         self.libmpc.init(MPC_COST_LONG.TTC, MPC_COST_LONG.DISTANCE, MPC_COST_LONG.ACCELERATION, MPC_COST_LONG.JERK)
         self.lastTR = CS.readdistancelines   
@@ -227,10 +232,9 @@ class LongitudinalMpc(object):
     self.v_mpc_future = self.mpc_solution[0].v_ego[10]
 
     # Reset if NaN or goes through lead car
-    dls = np.array(list(self.mpc_solution[0].x_l)) - np.array(list(self.mpc_solution[0].x_ego))
-    crashing = min(dls) < -50.0
-    nans = np.any(np.isnan(list(self.mpc_solution[0].v_ego)))
-    backwards = min(list(self.mpc_solution[0].v_ego)) < -0.01
+    crashing = any(lead - ego < -50 for (lead, ego) in zip(self.mpc_solution[0].x_l, self.mpc_solution[0].x_ego))
+    nans = any(math.isnan(x) for x in self.mpc_solution[0].v_ego)
+    backwards = min(self.mpc_solution[0].v_ego) < -0.01
 
     if ((backwards or crashing) and self.prev_lead_status) or nans:
       if t > self.last_cloudlog_t + 5.0:

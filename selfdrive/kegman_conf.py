@@ -12,18 +12,23 @@ class kegman_conf():
     if self.conf['tuneGernby'] != "1":
       self.conf['tuneGernby'] = str(1)
       write_conf = True
-    if self.conf['Kp'] == "-1":
-      self.conf['Kp'] = str(round(CP.lateralTuning.pid.kpV[0],3))
-      write_conf = True
-    if self.conf['Ki'] == "-1":
-      self.conf['Ki'] = str(round(CP.lateralTuning.pid.kiV[0],3))
-      write_conf = True
-    if self.conf['Kf'] == "-1":
-      self.conf['Kf'] = str('{:f}'.format(CP.lateralTuning.pid.kf))
-      write_conf = True
+	
+    # only fetch Kp, Ki, Kf sR and sRC from interface.py if it's a PID controlled car
+    if CP.lateralTuning.which() == 'pid':
+      if self.conf['Kp'] == "-1":
+        self.conf['Kp'] = str(round(CP.lateralTuning.pid.kpV[0],3))
+        write_conf = True
+      if self.conf['Ki'] == "-1":
+        self.conf['Ki'] = str(round(CP.lateralTuning.pid.kiV[0],3))
+        write_conf = True
+      if self.conf['Kf'] == "-1":
+        self.conf['Kf'] = str('{:f}'.format(CP.lateralTuning.pid.kf))
+        write_conf = True
+    
     if self.conf['steerRatio'] == "-1":
       self.conf['steerRatio'] = str(round(CP.steerRatio,3))
       write_conf = True
+    
     if self.conf['steerRateCost'] == "-1":
       self.conf['steerRateCost'] = str(round(CP.steerRateCost,3))
       write_conf = True
@@ -48,16 +53,16 @@ class kegman_conf():
         self.config.update({"tuneGernby":"1"})
         self.config.update({"Kp":"-1"})
         self.config.update({"Ki":"-1"})
-	self.element_updated = True
+        self.element_updated = True
 
       if "liveParams" not in self.config:
         self.config.update({"liveParams":"1"})
         self.element_updated = True
 	
       if "steerRatio" not in self.config:
-	self.config.update({"steerRatio":"-1"})
-	self.config.update({"steerRateCost":"-1"})
-	self.element_updated = True
+        self.config.update({"steerRatio":"-1"})
+        self.config.update({"steerRateCost":"-1"})
+        self.element_updated = True
 	
       if "leadDistance" not in self.config:
         self.config.update({"leadDistance":"5"})
@@ -68,19 +73,25 @@ class kegman_conf():
         self.element_updated = True
 	
       if "1barBP0" not in self.config:
-        self.config.update({"1barBP0":"-0.25"})
-	self.config.update({"1barBP1":"2.75"})
-	self.config.update({"2barBP0":"-0.25"})
-	self.config.update({"2barBP1":"3.0"})
-	self.config.update({"3barBP0":"0.0"})
-	self.config.update({"3barBP1":"4.0"})
+        self.config.update({"1barBP0":"-0.1"})
+        self.config.update({"1barBP1":"2.25"})
+        self.config.update({"2barBP0":"-0.1"})
+        self.config.update({"2barBP1":"2.5"})
+        self.config.update({"3barBP0":"0.0"})
+        self.config.update({"3barBP1":"3.0"})
         self.element_updated = True
 
 
       if "1barMax" not in self.config:
-        self.config.update({"1barMax":"2.5"})
-	self.config.update({"2barMax":"2.5"})
-	self.config.update({"3barMax":"2.5"})
+        self.config.update({"1barMax":"2.1"})
+        self.config.update({"2barMax":"2.1"})
+        self.config.update({"3barMax":"2.1"})
+        self.element_updated = True
+	
+      if "1barHwy" not in self.config:
+        self.config.update({"1barHwy":"0.4"})
+        self.config.update({"2barHwy":"0.3"})
+        self.config.update({"3barHwy":"0.1"})
         self.element_updated = True
 	
       if "slowOnCurves" not in self.config:
@@ -100,8 +111,9 @@ class kegman_conf():
                      "wheelTouchSeconds":"180", "battPercOff":"25", "carVoltageMinEonShutdown":"11800", \
                      "brakeStoppingTarget":"0.25", "tuneGernby":"1", \
                      "Kp":"-1", "Ki":"-1", "liveParams":"1", "leadDistance":"5", "deadzone":"0.0", \
-		     "1barBP0":"-0.25", "1barBP1":"2.75", "2barBP0":"-0.25", "2barBP1":"3.0", "3barBP0":"0.0", \
-		     "3barBP1":"4.0", "1barMax":"2.5", "2barMax":"2.5", "3barMax":"2.5", \
+		     "1barBP0":"-0.1", "1barBP1":"2.25", "2barBP0":"-0.1", "2barBP1":"2.5", "3barBP0":"0.0", \
+		     "3barBP1":"3.0", "1barMax":"2.1", "2barMax":"2.1", "3barMax":"2.1", \
+		     "1barHwy":"0.4", "2barHwy":"0.3", "3barHwy":"0.1", \
 		     "steerRatio":"-1", "steerRateCost":"-1", "slowOnCurves":"0", "Kf":"-1"}
 
       self.write_config(self.config)
