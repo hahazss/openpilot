@@ -690,9 +690,9 @@ class CarController(CarControllerBase):
 
       angle_control = self.CP.carFingerprint in ANGLE_CONTROL_CAR
       # steering control
-      can_sends.extend(hyundaicanfd.create_steering_messages(self.packer, self.CP, self.CAN, CC.enabled,
-                                                             apply_steer_req, CS.out.steeringPressed,
-                                                             apply_steer, apply_angle, self.lkas_max_torque, angle_control))
+      # can_sends.extend(hyundaicanfd.create_steering_messages(self.packer, self.CP, self.CAN, CC.enabled,
+      #                                                        apply_steer_req, CS.out.steeringPressed,
+      #                                                        apply_steer, apply_angle, self.lkas_max_torque, angle_control))
 
       # prevent LFA from activating on HDA2 by sending "no lane lines detected" to ADAS ECU
       if self.frame % 5 == 0 and hda2:
