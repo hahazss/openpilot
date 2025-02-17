@@ -876,12 +876,12 @@ class CarState(CarStateBase):
         ("BLINDSPOTS_REAR_CORNERS", 20),
       ]
 
-    if not (CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value) and not CP.openpilotLongitudinalControl:
+    if not (CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value) and not CP.openpilotLongitudinalControl or True:
       pt_messages += [
         ("SCC_CONTROL", 50),
       ]
 
-    if CP.adrvAvailable:
+    if CP.adrvAvailable and CP.flags & HyundaiFlags.CANFD_HDA2 or True:
       pt_messages += [
         ("ADRV_0x200", 20),
       ]
