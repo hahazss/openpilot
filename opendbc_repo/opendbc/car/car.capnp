@@ -638,6 +638,8 @@ struct CarParams {
   adrvAvailable @96 :Bool;
   brakeAvailable @97 :Bool;
   tpmsAvailable @98 :Bool;
+  isHDA2 @99 :Bool;
+  isAngleControl @100 :Bool;
 
   struct SmoothSteerData
   {

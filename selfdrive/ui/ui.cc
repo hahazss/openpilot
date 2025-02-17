@@ -181,6 +181,9 @@ static void update_state(UIState *s) {
     scene.steer_actuator_delay = cp_data.getSteerActuatorDelay();
     scene.car_fingerprint = cp_data.getCarFingerprint();
     scene.pcm_cruise = cp_data.getPcmCruise();
+    scene.is_canfd = cp_data.getIsCanFD();
+    scene.is_hda2 = cp_data.getIsHDA2();
+    scene.is_angle_control = cp_data.getIsAngleControl();
   }
   if (sm.updated("wideRoadCameraState")) {
     auto cam_state = sm["wideRoadCameraState"].getWideRoadCameraState();

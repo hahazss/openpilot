@@ -48,6 +48,8 @@ class CarInterface(CarInterfaceBase):
       ret.adrvAvailable = (hda2 and 0x200 in fingerprint[CAN.ECAN]) or 0x200 in fingerprint[cam_can]
       ret.brakeAvailable = 0x65 in fingerprint[CAN.ECAN]
       ret.tpmsAvailable = 0x3a0 in fingerprint[CAN.ECAN]
+      ret.isHDA2 = hda2
+      ret.isAngleControl = 0xcb in fingerprint[CAN.ECAN] or 0xcb in fingerprint[CAN.ACAN]
 
       if 0x105 in fingerprint[CAN.ECAN]:
         ret.flags |= HyundaiFlags.HYBRID.value
