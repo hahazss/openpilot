@@ -83,20 +83,20 @@ def create_steering_messages(packer, CP, CAN, enabled, lat_active, steering_pres
       "LKAS_ANGLE_MAX_TORQUE": max_torque if lat_active else 0,
     }
     ret.append(packer.make_can_msg("LKAS_ADAS", CAN.ECAN, values))
-    values = {
-      "LKA_MODE": 0,
-      "LKA_ACTIVE": 3 if lat_active else 0,
-      "LKA_ICON": 2 if enabled else 1,
-      "TORQUE_REQUEST": -1024,
-      "LKA_ASSIST": 1,
-      "STEER_REQ": 0,
-      "STEER_MODE": 0,
-      "HAS_LANE_SAFETY": 0,  # hide LKAS settings
-      "NEW_SIGNAL_2": 0,
-      "NEW_SIGNAL_3": 0,
-      "NEW_SIGNAL_4": 1,
-    }
-    ret.append(packer.make_can_msg("LFA", CAN.ECAN, values))
+    # values = {
+    #   "LKA_MODE": 0,
+    #   "LKA_ACTIVE": 3 if lat_active else 0,
+    #   "LKA_ICON": 2 if enabled else 1,
+    #   "TORQUE_REQUEST": -1024,
+    #   "LKA_ASSIST": 1,
+    #   "STEER_REQ": 0,
+    #   "STEER_MODE": 0,
+    #   "HAS_LANE_SAFETY": 0,  # hide LKAS settings
+    #   "NEW_SIGNAL_2": 0,
+    #   "NEW_SIGNAL_3": 0,
+    #   "NEW_SIGNAL_4": 1,
+    # }
+    # ret.append(packer.make_can_msg("LFA", CAN.ECAN, values))
   else:
     values = {
       "LKA_MODE": 0,

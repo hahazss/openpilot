@@ -704,8 +704,8 @@ class CarController(CarControllerBase):
                                                           self.CP.flags & HyundaiFlags.CANFD_HDA2_ALT_STEERING, CC.enabled, bool(self.stock_lfa_counter)))
 
       # LFA and HDA icons
-      if self.frame % 5 == 0 and (not hda2 or hda2_long):
-        can_sends.append(hyundaicanfd.create_lfahda_cluster(self.packer, self.CAN, CC.enabled))
+      # if self.frame % 5 == 0 and (not hda2 or hda2_long):
+      #   can_sends.append(hyundaicanfd.create_lfahda_cluster(self.packer, self.CAN, CC.enabled))
 
       # blinkers
       if hda2 and self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:
