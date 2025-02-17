@@ -881,7 +881,7 @@ class CarState(CarStateBase):
         ("SCC_CONTROL", 50),
       ]
 
-    if CP.adrvAvailable and CP.flags & HyundaiFlags.CANFD_HDA2:
+    if CP.adrvAvailable:
       pt_messages += [
         ("ADRV_0x200", 20),
       ]
@@ -904,7 +904,7 @@ class CarState(CarStateBase):
         cam_messages += [
           ("LKAS_ALT", 100),
         ]
-    elif CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
+    elif CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and False:
       cam_messages += [
         ("SCC_CONTROL", 50),
       ]
