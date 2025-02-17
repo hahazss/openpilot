@@ -730,7 +730,7 @@ class CarState(CarStateBase):
       ret.cruiseAccStatus = self.acc_active
       ret.cruiseGapSet = self.cruise_gap
     else:
-      cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
+      cp_cruise_info = cp
       # cruise state
       # CAN FD cars enable on main button press, set available if no TCS faults preventing engagement
       if not self.lfa_button_eng:
